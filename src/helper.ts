@@ -1,7 +1,7 @@
 import { McpServer, ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { ZodObject, ZodRawShape } from "zod";
-import { TodoItem } from "./tools/todo.types.js";
+import { TodoItem } from "./tools/todo/todo.types.js";
 interface TextContent {
   type: "text";
   text: string;

@@ -1,5 +1,5 @@
 import Loki from 'lokijs';
-import { TodoItem } from '../todo.types.js';
+import { TodoItem } from './todo.types.js';
 import { buildCallToolResult, buildTextContent, printTodoList, ToolDefinition } from '../../helper.js';
 import { z } from 'zod';
 const dbname = process.env.DB || 'todos.db';
