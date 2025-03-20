@@ -7,5 +7,5 @@
 - deleteTodo: 删除待办事项
 - updateTodo: 更新待办事项状态
 
-> 数据存储使用 lokijs，支持持久化到本地，添加环境变量: DB_NAME 为本地路径即可，比如 `/Users/your-home/todos.db`
-> ⚠️ 如不设置 DB_NAME ，将无法持久化
+> 数据存储使用 lokijs，支持持久化到本地，添加环境变量: DB 为本地路径即可，比如 `/Users/your-home/todos.db`
+> ⚠️ 如不设置 DB ，将无法持久化
