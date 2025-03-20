@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { registerTool } from "./helper.js";
-import { addTodo, updateTodo, deleteTodo, queryTodos } from "./tools/todo/todo.tool.js";
+import { addTodo, toggleTodoStatus, deleteTodo, queryTodos, updateTodo } from "./tools/todo/todo.tool.js";
 
 const server = new McpServer({
   name: 'todo-mcp-server',
@@ -11,6 +11,7 @@ const server = new McpServer({
 
 registerTool(server, addTodo);
 registerTool(server, updateTodo);
+registerTool(server, toggleTodoStatus);
 registerTool(server, deleteTodo);
 registerTool(server, queryTodos);
 

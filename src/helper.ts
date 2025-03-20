@@ -1,6 +1,7 @@
 import { McpServer, ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { ZodObject, ZodRawShape } from "zod";
+import { TodoItem } from "./tools/todo.types.js";
 interface TextContent {
   type: "text";
   text: string;
@@ -33,9 +34,32 @@ const buildCallToolResult = (contents: TextContent[]) => {
   } as CallToolResult;
 }
 
+const printTodo = (todo: TodoItem) => {
+  if (!todo) {
+    return '';
+  }
+  const todoStr = `
+  id: ${todo.id}
+  待办事项: ${todo.title}
+  截止时间: ${todo.deadline}
+  待办详情: ${todo.description}
+  状态: ${todo.status}\n
+  `;
+  return todoStr;
+}
+const printTodoList = (todos: TodoItem[]) => {
+  if (!todos || todos.length === 0) {
+    return '';
+  }
+  const todoListStr = todos.map(todo => printTodo(todo)).join('');
+  return todoListStr;
+}
+
 export {
   ToolDefinition,
   registerTool,
   buildCallToolResult,
   buildTextContent,
+  printTodo,
+  printTodoList,
 }

@@ -1,6 +1,6 @@
 import Loki from 'lokijs';
 import { TodoItem } from '../todo.types.js';
-import { buildCallToolResult, buildTextContent, ToolDefinition } from '../../helper.js';
+import { buildCallToolResult, buildTextContent, printTodoList, ToolDefinition } from '../../helper.js';
 import { z } from 'zod';
 const dbname = process.env.DB || 'todos.db';
 let todosCollection: Collection<TodoItem>;
@@ -23,10 +23,22 @@ function databaseInitialize() {
 
 // 查询所有待办事项
 function queryAllTodos(status?: 'pending' | 'completed' | 'all') {
-  if (status === 'all') {
-    return todosCollection.find();
+  let todoList: TodoItem[] = [];
+  if (!status || status === 'all') {
+    todoList = todosCollection.find();
+  } else {
+    todoList = todosCollection.find({ status });
   }
-  return todosCollection.find({ status });
+  // 根据状态和时间排序，所有未完成事项排在前面，已完成事项排在后面。
+  // 未完成事项根据时间排序，时间最近的排在前面。
+  // 已完成事项根据时间排序，时间最早的排在前面。
+  todoList.sort((a, b) => {
+    if (a.status === b.status) {
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+    }
+    return a.status === 'pending' ? -1 : 1;
+  });
+  return todoList;
 }
 
 // 添加待办事项
@@ -67,7 +79,10 @@ const addTodoTool: ToolDefinition<{ title: z.ZodString, description: z.ZodString
       updatedAt: Date.now(),
     };
     addTodoItem(newTodo);
-    return buildCallToolResult([buildTextContent('添加成功')]);
+    const todoList = queryAllTodos('pending');
+    let content = '添加成功，您当前的所有未完成待办事项如下：\n';
+    content += printTodoList(todoList);
+    return buildCallToolResult([buildTextContent(content)]);
   }
 };
 
@@ -80,10 +95,8 @@ const queryTodosTool: ToolDefinition<{ status: z.ZodEnum<['pending', 'completed'
     if (todos.length === 0) {
       return buildCallToolResult([buildTextContent('没有待办事项')]);
     }
-    const content = todos.map((todo) => {
-      return buildTextContent(`id:${todo.id} \n 标题：${todo.title} \n 状态：${todo.status} \n 截止时间：${todo.deadline} \n 描述：${todo.description}\n`);
-    });
-    return buildCallToolResult(content);
+    const content = printTodoList(todos);
+    return buildCallToolResult([buildTextContent(content)]);
   }
 };
 
@@ -95,13 +108,16 @@ const deleteTodoTool: ToolDefinition<{ id: z.ZodString }> = {
   }),
   callback: async ({ id }) => {
     deleteTodoItem(id);
-    return buildCallToolResult([buildTextContent('删除成功')]);
+    const todoList = queryAllTodos('pending');
+    let content = '删除成功，您当前的所有未完成待办事项如下：\n';
+    content += printTodoList(todoList);
+    return buildCallToolResult([buildTextContent(content)]);
   }
 };
 
-const updateTodoTool: ToolDefinition<{ id: z.ZodString, status: z.ZodEnum<['pending', 'completed']> }> = {
-  name: 'updateTodo',
-  description: '更新待办事项状态',
+const toggleTodoStatusTool: ToolDefinition<{ id: z.ZodString, status: z.ZodEnum<['pending', 'completed']> }> = {
+  name: 'toggleTodoStatus',
+  description: '更新待办事项状态，标记为已完成或未完成',
   paramsSchema: z.object({
     id: z.string().describe('待办事项 ID'),
     status: z.enum(['pending', 'completed']).describe('状态，只能是 pending 或 completed'),
@@ -113,9 +129,39 @@ const updateTodoTool: ToolDefinition<{ id: z.ZodString, status: z.ZodEnum<['pend
       todo.status = status;
       todo.updatedAt = Date.now();
       updateTodoItem(todo);
-      return buildCallToolResult([buildTextContent('更新成功')]);
+      const todoList = queryAllTodos('pending');
+      let content = '更新成功，您当前的所有未完成待办事项如下：\n';
+      content += printTodoList(todoList);
+      return buildCallToolResult([buildTextContent(content)]);
     } else {
-      return buildCallToolResult([buildTextContent('未找到待办事项')]);
+      return buildCallToolResult([buildTextContent('未找到待办事项！')]);
+    }
+  }
+};
+
+const updateTodoTool: ToolDefinition<{ id: z.ZodString, title: z.ZodString, description: z.ZodString, deadline: z.ZodString }> = {
+  name: 'updateTodo',
+  description: '更新待办事项',
+  paramsSchema: z.object({
+    id: z.string().describe('待办事项 ID'),
+    title: z.string().min(1).max(100).describe('标题，最多 100 字符'),
+    description: z.string().min(1).max(1000).describe('描述，最多 1000 字符'),
+    deadline: z.string().describe('截止日期，格式为 YYYY-MM-DD HH:mm:ss'),
+  }),
+  callback: async ({ id, title, description, deadline }) => {
+    const todo = todosCollection.findOne({ id });
+    if (todo) {
+      todo.title = title;
+      todo.description = description;
+      todo.deadline = new Date(deadline);
+      todo.updatedAt = Date.now();
+      updateTodoItem(todo);
+      const todoList = queryAllTodos('pending');
+      let content = '更新成功，您当前的所有未完成待办事项如下：\n';
+      content += printTodoList(todoList);
+      return buildCallToolResult([buildTextContent(content)]);
+    } else {
+      return buildCallToolResult([buildTextContent('未找到待办事项！')]);
     }
   }
 };
@@ -126,5 +172,6 @@ export {
   addTodoTool as addTodo,
   queryTodosTool as queryTodos,
   deleteTodoTool as deleteTodo,
+  toggleTodoStatusTool as toggleTodoStatus,
   updateTodoTool as updateTodo,
 }
