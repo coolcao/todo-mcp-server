@@ -39,7 +39,6 @@ const printTodo = (todo: TodoItem) => {
     return '';
   }
   const todoStr = `
-  id: ${todo.id}
   待办事项: ${todo.title}
   截止时间: ${todo.deadline}
   待办详情: ${todo.description}

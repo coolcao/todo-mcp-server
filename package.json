@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
+    "dayjs": "^1.11.13",
     "lokijs": "^1.5.12",
     "zod": "^3.24.2"
   },
