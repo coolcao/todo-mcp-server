@@ -93,11 +93,11 @@ const addTodoTool: ToolDefinition<{ title: z.ZodString, description: z.ZodString
   }
 };
 
-const queryTodosTool: ToolDefinition<{ status: z.ZodEnum<['pending', 'completed', 'all']> }> = {
+const queryTodosTool: ToolDefinition<{ status: z.ZodOptional<z.ZodEnum<['pending', 'completed', 'all']>> }> = {
   name: 'queryTodos',
   description: '查询待办事项, 可以根据状态[pending,completed,all]筛选,all表示查询所有',
   paramsSchema: z.object({
-    status: z.enum(['pending', 'completed', 'all']).describe('状态，pending:未完成, completed:已完成, all:查询所有')
+    status: z.enum(['pending', 'completed', 'all']).optional().describe('状态，pending:未完成, completed:已完成, all:查询所有')
   }),
   callback: async ({ status }) => {
     const todos = queryAllTodos(status);
